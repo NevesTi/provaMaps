@@ -1,17 +1,17 @@
 
 import { StyleSheet, Text, View } from 'react-native';
-import { HomePage } from './src/pages/home_pages'; 
+import { Home_Maps } from './src/pages/home_maps';
+import { Home_Camera } from './src/pages/home_camera';
 
 export default function App() {
-  return (
-    <View style={styles.container}> 
-      <HomePage/>
-    </View> );
-}
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  
-});
+
+
+  return (
+    <View >
+  <Home_Camera/>
+    </View>);
+
+}
+const style = StyleSheet.create({
+})

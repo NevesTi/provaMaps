@@ -1,17 +1,32 @@
 
 import { StyleSheet, Text, View } from 'react-native';
-import { Home_Maps } from './src/pages/home_maps';
-import { Home_Camera } from './src/pages/home_camera';
+import { NavigationContainer,  } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import CameraPage from './src/pages/camera-Page';
+import HomeMaps from './src/pages/home-maps';
+
+
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
 
-
-
   return (
-    <View >
-  <Home_Camera/>
-    </View>);
 
-}
-const style = StyleSheet.create({
-})
+    <NavigationContainer>
+
+      <Stack.Navigator>
+        <Stack.Screen options={({ route }) => ({
+          headerShown: false
+        })} name="homemaps" component={HomeMaps} />
+
+        <Stack.Screen options={({ route }) => ({
+          headerShown: false                                                                                                                                                                                                                                                                                                                                
+        })} name="camera" component={CameraPage} />
+
+      </Stack.Navigator>
+
+    </NavigationContainer>
+  );
+
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  

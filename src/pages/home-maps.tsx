@@ -8,6 +8,8 @@ import { Image } from 'expo-image';
 import { Icon } from "react-native-elements";
 import { styles } from "../styles/styles";
 import PlaceEntity from "../entities/place-entity";
+import { db } from "../../firebase-config";
+import { onValue, ref } from "firebase/database";
 
 
 export default function HomeMaps({ navigation }) {
@@ -18,17 +20,24 @@ export default function HomeMaps({ navigation }) {
   const [image, setImage] = useState(null);
   const [modalVisibility, setModalVisibility] = useState(true);
 
+  async function getPalces(){
+    return onValue (ref(db,'/places'),(snapshot)=>{
+ console.log('Dados do Realtime', snapshot);
+    });
+  }
+
 
 
   const [mapRef, setMapRef] = useState(null);
   const [places, setplaces] = useState<PlaceEntity[]>([{
     id: 1,
     description: 'Descrição',
-    imageUrl: 'https://odia.ig.com.br/_midias/jpg/2022/03/12/1200x750/1_tres_rios002-24558796.jpeg',
-    date: '19 de Abril de 2017',
+    imagePath: 'https://odia.ig.com.br/_midias/jpg/2022/03/12/1200x750/1_tres_rios002-24558796.jpeg',
+    photoDate: '19 de Abril de 2017',
     latitude: -22.1212,
     longitude: -43.0662,
   }]);
+
 
   return (
     <View style={styles.container}>
@@ -63,7 +72,7 @@ export default function HomeMaps({ navigation }) {
                 }}
                 description={place.description}>
                 <View style={styles.markerImageContainer}>
-                  <Image source={{ uri: place.imageUrl }} style={styles.markerImage} />
+                  <Image source={{ uri: place.imagePath }} style={styles.markerImage} />
                 </View>
               </Marker>
 
@@ -87,8 +96,8 @@ export default function HomeMaps({ navigation }) {
         <Text style={{ fontSize: 17, marginTop: 16 }}>Cidade de Três Rios</Text>
         <View style={{ margin: 32, paddingHorizontal: 32, width: '100%', flexDirection: 'row', justifyContent: "space-between" }}>
           <View style={styles.cardButton}>
-            <TouchableNativeFeedback onPress={() => { navigation.navigate('camera') }}>
-              <Icon name='edit' type='google' color='white' size={15} />
+            <TouchableNativeFeedback onPress={() => { navigation.navigate('camera')}}>
+              <Icon name='edit' type='google' color='white' size={15}/>
             </TouchableNativeFeedback>
           </View>
 

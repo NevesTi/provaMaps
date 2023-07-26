@@ -2,41 +2,83 @@
 import { View, StyleSheet, Text, TouchableOpacity, TouchableNativeFeedback, TextInput } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, CameraType } from 'expo-camera';
-import * as MediaLibray from 'expo-media-library';
 import { Image } from 'expo-image';
 import { Icon } from "react-native-elements";
 import { styles } from "../styles/styles";
 import PlaceEntity from "../entities/place-entity";
 import { db } from "../../firebase-config";
 import { onValue, ref } from "firebase/database";
+import * as Location from 'expo-location';
+
+interface Coords {
+  latitude: number;
+  longitude: number;
+}
 
 
 export default function HomeMaps({ navigation }) {
-  const [Permission, setPermission] = useState(null);
-  const [camera, setCamera] = useState(null);
-  const [cameraPosition, setCameraPosition] = useState(null);
-  const [origin, setOrigin] = useState(null);
-  const [image, setImage] = useState(null);
-  const [modalVisibility, setModalVisibility] = useState(true);
+  const [modalVisibility, setModalVisibility] = useState(false);
+  const [mapRef, setMapRef] = useState(null);
+  const [places, setPlaces] = useState<PlaceEntity[]>([]);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceEntity>();
 
-  async function getPalces(){
-    return onValue (ref(db,'/places'),(snapshot)=>{
- console.log('Dados do Realtime', snapshot);
+  useEffect(() => {
+    getPlaces();
+    (async () => {
+
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        initMap();
+        return;
+      }
+    })();
+  }, []);
+
+  async function getPlaces() {
+    return onValue(ref(db, '/places'), (snapshot) => {
+      console.log(getPlaces)
+      try {
+        setPlaces([]);
+        if (snapshot !== undefined) {
+          snapshot.forEach((childSnapshot) => {
+            const childkey = childSnapshot.key;
+            let childValue = childSnapshot.val();
+            childValue.id = childkey;
+            setPlaces((places) => [...places, (childValue as PlaceEntity)])
+          });
+        }
+
+      } catch (e) {
+        console.log(e);
+      }
+
+
     });
   }
 
+  async function addItem(imageUrl: string) {
+    const newItem = {
+      id: Math.random().toString(),
+      description: '',
+      coords: await getCurrentLocation(),
+      imagePath: imageUrl,
+      photoDate: Date().toString(),
+      title: ''
+    }
+    setPlaces((places) => [...places, newItem]);
+  }
+
+  async function getCurrentLocation(): Promise<Coords> {
+    let location = await Location.getCurrentPositionAsync({});
+    return { latitude: location.coords.latitude, longitude: location.coords.longitude };
+  }
+
+  async function initMap() {
+    const coords = await getCurrentLocation();
+    mapRef.animateToRegion({ latitude: coords.latitude, longitude: coords.longitude }, 500);
+  }
 
 
-  const [mapRef, setMapRef] = useState(null);
-  const [places, setplaces] = useState<PlaceEntity[]>([{
-    id: 1,
-    description: 'Descrição',
-    imagePath: 'https://odia.ig.com.br/_midias/jpg/2022/03/12/1200x750/1_tres_rios002-24558796.jpeg',
-    photoDate: '19 de Abril de 2017',
-    latitude: -22.1212,
-    longitude: -43.0662,
-  }]);
 
 
   return (
@@ -59,16 +101,19 @@ export default function HomeMaps({ navigation }) {
 
         {
           places.map((place) => {
+            console.log(place)
             return (
+              
               <Marker
                 key={place.id}
                 id={place.id.toString()}
                 coordinate={{
-                  latitude: place.latitude,
-                  longitude: place.longitude,
+                  latitude: place.coords.latitude,
+                  longitude: place.coords.longitude,
                 }}
                 onPress={() => {
-
+                  setSelectedPlace(place);
+                  setModalVisibility(true);
                 }}
                 description={place.description}>
                 <View style={styles.markerImageContainer}>
@@ -80,38 +125,46 @@ export default function HomeMaps({ navigation }) {
           })
         }
 
-
-
       </MapView>
+
       <View style={styles.cameraButtonRight}>
-        <TouchableNativeFeedback onPress={() => { navigation.navigate('camera') }}>
+        <TouchableNativeFeedback onPress={() => { navigation.navigate('camera', { callback: (imageUrl) => addItem(imageUrl) }) }}>
           <Icon name='photo-camera' type='google' color='white' size={30} />
         </TouchableNativeFeedback>
       </View>
 
-      <View style={styles.cardStyle} >
-        <Image source={{ uri: 'https://odia.ig.com.br/_midias/jpg/2022/03/12/1200x750/1_tres_rios002-24558796.jpeg' }} style={{ width: '100%', maxHeight: 400, aspectRatio: 1 }} />
+      {
 
-        <TextInput></TextInput>
-        <Text style={{ fontSize: 17, marginTop: 16 }}>Cidade de Três Rios</Text>
-        <View style={{ margin: 32, paddingHorizontal: 32, width: '100%', flexDirection: 'row', justifyContent: "space-between" }}>
-          <View style={styles.cardButton}>
-            <TouchableNativeFeedback onPress={() => { navigation.navigate('camera')}}>
-              <Icon name='edit' type='google' color='white' size={15}/>
-            </TouchableNativeFeedback>
+        modalVisibility ?
+
+          <View style={styles.cardStyle} >
+            <Image source={{ uri: selectedPlace.imagePath }} style={{ width: '100%', maxHeight: 300, aspectRatio: 1 }} />
+            <TextInput placeholder="Digite aqui a sua descrição"></TextInput>
+            <Text style={{ fontSize: 17, marginTop: 8 }}>{selectedPlace.description}</Text>
+            <View style={{ margin: 16, paddingHorizontal: 32, width: '100%', flexDirection: 'row', justifyContent: "space-between" }}>
+              <View style={styles.cardButton}>
+                <TouchableNativeFeedback onPress={() => { navigation.navigate('camera') }}>
+                  <Icon name='edit' type='google' color='white' size={15} />
+                </TouchableNativeFeedback>
+              </View>
+
+              <View style={styles.cardButton}>
+                <TouchableNativeFeedback onPress={() => { navigation.navigate('camera') }}>
+                  <Icon name='delete' type='google' color='white' size={15} />
+                </TouchableNativeFeedback>
+              </View>
+            </View>
           </View>
 
-          <View style={styles.cardButton}>
-            <TouchableNativeFeedback onPress={() => { navigation.navigate('camera') }}>
-              <Icon name='delete' type='google' color='white' size={15} />
-            </TouchableNativeFeedback>
-          </View>
-        </View>
-      </View>
+          :
+
+          <></>
+
+      }
+
+
+
     </View>
-
-
-
   )
 }
 

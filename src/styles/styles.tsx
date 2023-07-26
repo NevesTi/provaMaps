@@ -25,10 +25,11 @@ export const styles = StyleSheet.create({
         backgroundColor: 'blue',
         elevation: 5
     },
-    camera: {
-        flex: 1,
+    camera: {        
         justifyContent: 'center',
         alignItems: 'center',
+        width: '100%',
+        height: '100%'
     },
 
     cameraButtonLeft: {

@@ -22,6 +22,17 @@ export default function CameraPage({ navigation, route }) {
 
     }, []);
 
+    async function takePicture(){
+        
+        if(cameraRef){
+            const {uri} = await cameraRef.takePictureAsync();
+            await MediaLibray.saveToLibraryAsync(uri);
+            route.params.callback(uri);
+            navigation.goBack();
+        }
+        
+    }
+
     return (
         <View style={styles.container}>
             <Camera
@@ -33,7 +44,7 @@ export default function CameraPage({ navigation, route }) {
             </Camera>
 
             <View style={styles.cameraButtonRight}>
-                <TouchableNativeFeedback onPress={() => { }}>
+                <TouchableNativeFeedback onPress={takePicture}>
                     <Icon type="google" name="photo-camera" size={30} color='white' />
                 </TouchableNativeFeedback>
             </View>

@@ -1,11 +1,8 @@
 export default class PlaceEntity{
-    id: number;
+    id: string;
     description:string;
-    latitude:number;
-    longitude:number;
+    coords: {latitude: number, longitude: number};    
     imagePath:string;
     photoDate:string;
-
-
-
+    title:string;
 }

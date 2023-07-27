@@ -7,7 +7,7 @@ import { Icon } from "react-native-elements";
 import { styles } from "../styles/styles";
 import PlaceEntity from "../entities/place-entity";
 import { db } from "../../firebase-config";
-import { onValue, ref } from "firebase/database";
+import { onValue, push, ref } from "firebase/database";
 import * as Location from 'expo-location';
 
 interface Coords {
@@ -65,6 +65,8 @@ export default function HomeMaps({ navigation }) {
       photoDate: Date().toString(),
       title: ''
     }
+    
+    push (ref(db, 'places'), newItem);
     setPlaces((places) => [...places, newItem]);
   }
 

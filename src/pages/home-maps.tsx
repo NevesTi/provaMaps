@@ -3,11 +3,11 @@ import { View, StyleSheet, Text, TouchableOpacity, TouchableNativeFeedback, Text
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import React, { useRef, useState, useEffect } from 'react';
 import { Image } from 'expo-image';
-import { Icon } from "react-native-elements";
+import { Button, Icon } from "react-native-elements";
 import { styles } from "../styles/styles";
 import PlaceEntity from "../entities/place-entity";
-import { db } from "../../firebase-config";
-import { onValue, push, ref } from "firebase/database";
+import { db } from "../../firebase-config_alternativo.js";
+import { onValue, push, ref, update } from "firebase/database";
 import * as Location from 'expo-location';
 
 interface Coords {
@@ -21,6 +21,10 @@ export default function HomeMaps({ navigation }) {
   const [mapRef, setMapRef] = useState(null);
   const [places, setPlaces] = useState<PlaceEntity[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<PlaceEntity>();
+  const [placeDescription, setPlaceDescription] = useState('');
+  const onChange = (event)=>{setPlaceDescription(event);};
+
+
 
   useEffect(() => {
     getPlaces();
@@ -65,8 +69,8 @@ export default function HomeMaps({ navigation }) {
       photoDate: Date().toString(),
       title: ''
     }
-    
-    push (ref(db, 'places'), newItem);
+
+    push(ref(db, 'places'), newItem);
     setPlaces((places) => [...places, newItem]);
   }
 
@@ -79,6 +83,13 @@ export default function HomeMaps({ navigation }) {
     const coords = await getCurrentLocation();
     mapRef.animateToRegion({ latitude: coords.latitude, longitude: coords.longitude }, 500);
   }
+
+  async function updateItem() {
+    selectedPlace.description = placeDescription;
+    update(ref(db, '/places/' + selectedPlace.id), selectedPlace);
+    setModalVisibility(false)
+    setPlaceDescription('');
+}
 
 
 
@@ -105,7 +116,7 @@ export default function HomeMaps({ navigation }) {
           places.map((place) => {
             console.log(place)
             return (
-              
+
               <Marker
                 key={place.id}
                 id={place.id.toString()}
@@ -141,7 +152,7 @@ export default function HomeMaps({ navigation }) {
 
           <View style={styles.cardStyle} >
             <Image source={{ uri: selectedPlace.imagePath }} style={{ width: '100%', maxHeight: 300, aspectRatio: 1 }} />
-            <TextInput placeholder="Digite aqui a sua descrição"></TextInput>
+            <TextInput onChangeText={onChange} placeholder="Digite aqui a sua descrição"></TextInput>
             <Text style={{ fontSize: 17, marginTop: 8 }}>{selectedPlace.description}</Text>
             <View style={{ margin: 16, paddingHorizontal: 32, width: '100%', flexDirection: 'row', justifyContent: "space-between" }}>
               <View style={styles.cardButton}>
@@ -150,17 +161,12 @@ export default function HomeMaps({ navigation }) {
                 </TouchableNativeFeedback>
               </View>
 
-              <View style={styles.cardButton}>
-                <TouchableNativeFeedback onPress={() => { navigation.navigate('camera') }}>
-                  <Icon name='delete' type='google' color='white' size={15} />
-                </TouchableNativeFeedback>
-              </View>
+              <Button style={{ marginTop: 16, flex: 1 }}
+                onPress={() => { updateItem();}} title='Gravar'>
+              </Button>
+
             </View>
-          </View>
-
-          :
-
-          <></>
+          </View> : <></>
 
       }
 
@@ -169,7 +175,6 @@ export default function HomeMaps({ navigation }) {
     </View>
   )
 }
-
 
 
 

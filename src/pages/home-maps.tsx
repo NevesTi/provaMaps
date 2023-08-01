@@ -1,13 +1,13 @@
 
-import { View, StyleSheet, Text, TouchableOpacity, TouchableNativeFeedback, TextInput } from "react-native";
+import { View, Text, TouchableNativeFeedback, TextInput, Alert } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Image } from 'expo-image';
-import { Button, Icon } from "react-native-elements";
+import {Icon } from "react-native-elements";
 import { styles } from "../styles/styles";
 import PlaceEntity from "../entities/place-entity";
 import { db } from "../../firebase-config_alternativo.js";
-import { onValue, push, ref, update } from "firebase/database";
+import { onValue, push, ref, remove, update } from "firebase/database";
 import * as Location from 'expo-location';
 
 interface Coords {
@@ -15,32 +15,37 @@ interface Coords {
   longitude: number;
 }
 
-
 export default function HomeMaps({ navigation }) {
+
+  var region;
   const [modalVisibility, setModalVisibility] = useState(false);
   const [mapRef, setMapRef] = useState(null);
   const [places, setPlaces] = useState<PlaceEntity[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<PlaceEntity>();
-  const [placeDescription, setPlaceDescription] = useState('');
-  const onChange = (event)=>{setPlaceDescription(event);};
-
-
+  const [placeDescription, setPlaceDescription] = useState(null);
+  const onChange = (event) => { setPlaceDescription(event); };
+  const [description, setDescription] = useState('');
 
   useEffect(() => {
-    getPlaces();
+    getAll();
+    initMap();
+
+
     (async () => {
 
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         initMap();
         return;
+
+
       }
     })();
   }, []);
 
-  async function getPlaces() {
+  async function getAll() {
     return onValue(ref(db, '/places'), (snapshot) => {
-      console.log(getPlaces)
+      console.log(getAll)
       try {
         setPlaces([]);
         if (snapshot !== undefined) {
@@ -61,17 +66,22 @@ export default function HomeMaps({ navigation }) {
   }
 
   async function addItem(imageUrl: string) {
+    const position = await getCurrentLocation();
     const newItem = {
       id: Math.random().toString(),
-      description: '',
-      coords: await getCurrentLocation(),
       imagePath: imageUrl,
+      description: '',
       photoDate: Date().toString(),
+      coords: {
+        latitude: position.latitude,
+        longitude: position.longitude
+      },
       title: ''
     }
 
     push(ref(db, 'places'), newItem);
-    setPlaces((places) => [...places, newItem]);
+    //setPlaces((places) => [...places, newItem]);
+    setModalVisibility(false)
   }
 
   async function getCurrentLocation(): Promise<Coords> {
@@ -85,14 +95,36 @@ export default function HomeMaps({ navigation }) {
   }
 
   async function updateItem() {
-    selectedPlace.description = placeDescription;
+    selectedPlace.description = description;
     update(ref(db, '/places/' + selectedPlace.id), selectedPlace);
-    setModalVisibility(false)
-    setPlaceDescription('');
-}
+    setModalVisibility(false);
+    setSelectedPlace(null);
+  }
 
+  async function removeItem() {
+    setModalVisibility(false);
+    setSelectedPlace(null);
+    remove(ref(db, '/places/' + selectedPlace.id));
+  }
 
+  function showConfirmDialog() {
+    return Alert.alert(
+      "Deseja remover o local?",
+      "Esta ação nõa pode ser desfeita",
 
+      [
+        {
+          text: "sim",
+          onPress: () => removeItem()
+        },
+        {
+          text: "Não",
+        }
+      ]
+
+    )
+
+  }
 
   return (
     <View style={styles.container}>
@@ -127,6 +159,7 @@ export default function HomeMaps({ navigation }) {
                 onPress={() => {
                   setSelectedPlace(place);
                   setModalVisibility(true);
+
                 }}
                 description={place.description}>
                 <View style={styles.markerImageContainer}>
@@ -149,22 +182,49 @@ export default function HomeMaps({ navigation }) {
       {
 
         modalVisibility ?
-
           <View style={styles.cardStyle} >
-            <Image source={{ uri: selectedPlace.imagePath }} style={{ width: '100%', maxHeight: 300, aspectRatio: 1 }} />
-            <TextInput onChangeText={onChange} placeholder="Digite aqui a sua descrição"></TextInput>
-            <Text style={{ fontSize: 17, marginTop: 8 }}>{selectedPlace.description}</Text>
-            <View style={{ margin: 16, paddingHorizontal: 32, width: '100%', flexDirection: 'row', justifyContent: "space-between" }}>
+
+            <TouchableNativeFeedback onPress={() => { navigation.navigate('place', { place: selectedPlace }) }}>
+              <Image source={{ uri: selectedPlace.imagePath }} style={{ width: '100%', maxHeight: 300, aspectRatio: 1 }} />
+            </TouchableNativeFeedback>
+
+            {
+              selectedPlace.description !== '' ?
+                <Text style={{ fontSize: 17, marginTop: 8 }}>{selectedPlace.description}</Text> :
+                <View style={{ alignItems: 'center', marginTop: 16, width: '100%', flexDirection: 'row', justifyContent: "space-between" }}>
+                  <TextInput placeholder="Digite aqui a descrição"
+                    onChangeText={setDescription}
+                    style={{
+                      height: 40,
+                      marginRight: 8,
+                      borderRadius: 8,
+                      flex: 1,
+                      backgroundColor: '#8786867d',
+                      paddingHorizontal: 8
+                    }}></TextInput>
+                  <View style={styles.cardButton}>
+                    <TouchableNativeFeedback onPress={() => {
+                      // Salvar Item
+                      updateItem();
+
+
+                    }}>
+                      <Icon name='edit' type='google' color='white' size={15} />
+                    </TouchableNativeFeedback>
+                  </View>
+                </View>
+            }
+
+            <View style={{ marginTop: 16, width: '100%', flexDirection: 'row', justifyContent: "flex-end" }}>
               <View style={styles.cardButton}>
-                <TouchableNativeFeedback onPress={() => { navigation.navigate('camera') }}>
+                <TouchableNativeFeedback onPress={() => {
+                  // Remover item
+                  showConfirmDialog();
+
+                }}>
                   <Icon name='edit' type='google' color='white' size={15} />
                 </TouchableNativeFeedback>
               </View>
-
-              <Button style={{ marginTop: 16, flex: 1 }}
-                onPress={() => { updateItem();}} title='Gravar'>
-              </Button>
-
             </View>
           </View> : <></>
 

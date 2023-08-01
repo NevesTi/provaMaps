@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { View, TouchableNativeFeedback, Text } from "react-native";
+import { View, TouchableNativeFeedback, Text, useWindowDimensions } from "react-native";
 import * as MediaLibray from 'expo-media-library';
 import { Image } from 'expo-image';
 import { Camera, CameraType } from 'expo-camera';
@@ -12,50 +12,88 @@ import { app } from "../../firebase-config_alternativo.js";
 
 export default function CameraPage({ navigation, route }) {
 
+    const {width} = useWindowDimensions();
+    const height = Math.round((width *16/9));
     const [cameraRef, setCameraRef] = useState(null);
     const [cameraPermission, setCameraPosition] = useState(false);
     const [IsUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
-        (async () => {
-            const cameraStatus = await Camera.requestCameraPermissionsAsync();
-            setCameraPosition(cameraStatus.status === 'granted');
-            await MediaLibray.requestPermissionsAsync();
-        })();
+        getCameraPermissions(); 
 
     }, []);
 
-    async function takePicture() {
+    async function getCameraPermissions() {
 
-        if (cameraRef) {
-            const { uri } = await cameraRef.takePictureAsync();
-            await MediaLibray.saveToLibraryAsync(uri);
-            route.params.callback(await uploadImage(uri));
-            navigation.goBack();
-        }
-
+        const cameraStatus = await Camera.requestCameraPermissionsAsync();
+        setCameraPosition(cameraStatus.status === 'granted');
+        await MediaLibray.requestPermissionsAsync();
 
     }
 
-    async function uploadImage(imageUrl): Promise<string> {
+
+    async function uploadImage(imageUrl: string): Promise<string> {
         setIsUploading(true);
-        const response = await fetch(imageUrl);
-        const blob = await response.blob();
+        const response = await uriToBlob(imageUrl);
+        const blob = response;
 
         const storage = getStorage(app);
         const storageRef = ref(
             storage, 'images/' + imageUrl.replace(/^.*[\\\/]/, '')
-        )
+        );
 
 
-        const upload = await uploadBytes(storageRef, blob);
-
+         await uploadBytes(storageRef, blob);
         const uploadedImageUrl = await getDownloadURL(storageRef);
         console.log(uploadedImageUrl);
         setIsUploading(false);
         return uploadedImageUrl;
 
     }
+
+    
+    async function takePicture() { 
+
+        if (cameraRef) {
+            const { uri } = await cameraRef.takePictureAsync();
+            await MediaLibray.saveToLibraryAsync(uri);
+            const uploadedImageUrl = await uploadImage(uri);
+            route.params.callback(uploadedImageUrl);
+            navigation.goBack();
+        }
+
+
+    }
+
+    async function uriToBlob(uri: string): Promise<Blob> {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            // If successful -> return with blob
+            xhr.onload = function () {
+                resolve(xhr.response);
+            };
+
+            // reject on error
+            xhr.onerror = function () {
+                reject(new Error('uriToBlob failed'));
+            };
+
+            // Set the response type to 'blob' - this means the server's response 
+            // will be accessed as a binary object
+            xhr.responseType = 'blob';
+
+            // Initialize the request. The third argument set to 'true' denotes 
+            // that the request is asynchronous
+            xhr.open('GET', uri, true);
+
+            // Send the request. The 'null' argument means that no body content is given for the request
+            xhr.send(null);
+        });
+    };
+
+
+    
 
     return (
         <View style={styles.container}>

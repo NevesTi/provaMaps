@@ -1,6 +1,8 @@
 {
   "expo": {
-    "plugins": ["expo-camera"],   
+    "plugins": [
+      "expo-camera"
+    ],
     "name": "provaMaps",
     "slug": "provaMaps",
     "version": "1.0.0",
@@ -22,13 +24,25 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyADU3bOiJGUeUU2_OHylHLwnM-Djo1UQGM"
+        }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.neves_costa.provaMaps"
     },
-    
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1b1d6bc0-b331-4429-b749-5a6127fd7668"
+      }
     }
   }
 }
-
-

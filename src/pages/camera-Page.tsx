@@ -6,7 +6,7 @@ import { Camera, CameraType } from 'expo-camera';
 import { styles } from "../styles/styles";
 import { Icon } from "react-native-elements";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "@firebase/storage";
-import { app } from "../../firebase-config_alternativo.js";
+import { app } from "../../firebase-config";
 
 
 

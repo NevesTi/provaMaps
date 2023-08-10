@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Icon } from "react-native-elements";
 import { styles } from "../styles/styles";
 import PlaceEntity from "../entities/place-entity";
-import { db } from "../../firebase-config_alternativo.js";
+import { db } from "../../firebase-config";
 import { onValue, push, ref, remove, update } from "firebase/database";
 import * as Location from 'expo-location';
 import { getStoredData } from "../shared/secure-store-service";
@@ -28,18 +28,16 @@ export default function HomeMaps({ navigation }) {
   const [description, setDescription] = useState('');
 
   useEffect(() => {
-    getAll();
-    initMap();
+    
 
 
     (async () => {
 
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        initMap();
+        getAll();
+        initMap();       
         return;
-
-
       }
     })();
   }, []);
@@ -71,7 +69,7 @@ export default function HomeMaps({ navigation }) {
     const newItem: PlaceEntity = {
       id: Math.random().toString(),
       imagePath: imageUrl,
-      description: '',
+      description: 'CelsoNeves',
       photoDate: Date().toString(),
       coords: {
         latitude: position.latitude,

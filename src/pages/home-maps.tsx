@@ -1,14 +1,15 @@
 
-import { View, Text, TouchableNativeFeedback, TextInput, Alert } from "react-native";
+import { View, Text, TouchableNativeFeedback, TextInput, Alert, Image } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import React, { useState, useEffect } from 'react';
-import { Image } from 'expo-image';
-import {Icon } from "react-native-elements";
+//import { Image } from 'expo-image';
+import { Icon } from "react-native-elements";
 import { styles } from "../styles/styles";
 import PlaceEntity from "../entities/place-entity";
 import { db } from "../../firebase-config_alternativo.js";
 import { onValue, push, ref, remove, update } from "firebase/database";
 import * as Location from 'expo-location';
+import { getStoredData } from "../shared/secure-store-service";
 
 interface Coords {
   latitude: number;
@@ -58,7 +59,7 @@ export default function HomeMaps({ navigation }) {
         }
 
       } catch (e) {
-        console.log(e);
+
       }
 
 
@@ -67,7 +68,7 @@ export default function HomeMaps({ navigation }) {
 
   async function addItem(imageUrl: string) {
     const position = await getCurrentLocation();
-    const newItem = {
+    const newItem: PlaceEntity = {
       id: Math.random().toString(),
       imagePath: imageUrl,
       description: '',
@@ -76,12 +77,14 @@ export default function HomeMaps({ navigation }) {
         latitude: position.latitude,
         longitude: position.longitude
       },
-      title: ''
+      title: '',
+      author: await getStoredData('author')
     }
 
     push(ref(db, 'places'), newItem);
     //setPlaces((places) => [...places, newItem]);
     setModalVisibility(false)
+    
   }
 
   async function getCurrentLocation(): Promise<Coords> {
@@ -222,16 +225,35 @@ export default function HomeMaps({ navigation }) {
                   showConfirmDialog();
 
                 }}>
-                  <Icon name='edit' type='google' color='white' size={15} />
+                  <Icon name='delete' type='google' color='white' size={15} />
                 </TouchableNativeFeedback>
               </View>
             </View>
-          </View> : <></>
+            <View style={{
+              flexDirection: 'row',
+              width: '100%',
+              marginBottom: 16,
+              justifyContent: 'space-between'
+            }}>
 
+              <View style={{}}>
+                <Text>Date: {selectedPlace.photoDate}</Text>
+                <Text>Author: {selectedPlace.author}</Text>
+              </View>
+
+              <View style={[styles.cardButton, { marginTop: 20 }]}>
+                <TouchableNativeFeedback onPress={() => {
+                  navigation.navigate('chat', {place: selectedPlace})
+
+                }}>
+                  <Icon name='chat' type='google' color='white' size={15} />
+                </TouchableNativeFeedback>
+
+              </View>
+            </View>
+          </View> :
+          <></>
       }
-
-
-
     </View>
   )
 }

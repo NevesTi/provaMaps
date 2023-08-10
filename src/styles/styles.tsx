@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
     },
     cardStyle:{
         backgroundColor:'white',
-        height:470,
+        height:510,
         position:'absolute',
         top:32,
         right:16,
@@ -82,7 +82,57 @@ export const styles = StyleSheet.create({
         backgroundColor: 'black',
         elevation: 5
     },
+containerLogin:{
+    flex:1,
+    justifyContent:'space-between',
+    alignItems:'center',
+    backgroundColor:'#0088a3',
+    width:'100%',
+    height:'100%',
+
+},
+containerImage:{
+    position:'absolute',
+    top:150,
+    height:100,
+    width:100,
+    borderRadius:25,
+    backgroundColor:'#FFFFFF',
+    resizeMode:'cover'
+    
+},
+
+containerChat:{
+    backgroundColor:'transparent',
+    alignItems:'center',
+    justifyContent:'flex-end',
+    paddingLeft:16
+
+},
+containerMessage:{
+    backgroundColor:'transparent',
+    width:'100%',
+    alignItems:'flex-start',
+    marginVertical:'4'
+
+},
+
+containerReverse:{
+backgroundColor:'transparent',
+alignItems:'center',
+justifyContent:'flex-start',
+paddingRight:16,
+width:'100%'
+},
+containerMessageReverse:{
+    backgroundColor:'transparent',
+    width:'100%',
+    marginVertical:4,
+    alignItems:'flex-end'
+
+}
 
 
 
-})
+
+});

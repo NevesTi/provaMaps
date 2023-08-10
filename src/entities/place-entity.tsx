@@ -5,4 +5,5 @@ export default class PlaceEntity{
     imagePath:string;
     photoDate:string;
     title:string;
+    author:string;
 }
